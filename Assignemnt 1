@@ -1,0 +1,69 @@
+def example_word_count():
+    # This example question requires counting words in the example_string below.
+    example_string = "Amy is 5 years old"
+
+    # YOUR CODE HERE.
+    # You should write your solution here, and return your result, you can comment out or delete the
+    # NotImplementedError below.
+    result = example_string.split(" ")
+    return len(result)
+
+
+
+    import re
+def names():
+    simple_string = """Amy is 5 years old, and her sister Mary is 2 years old.
+    Ruth and Peter, their parents, have 3 kids."""
+
+    names = re.findall('Amy|Mary|Ruth|Peter', simple_string)
+    print(len(names))
+    return(names)
+
+    assert len(names()) == 4, "There are four names in the simple_string"
+
+
+
+    import re
+    def grades():
+        with open ("assets/grades.txt", "r") as file:
+            grades = file.read()
+
+            grades = re.findall("[\w]*\s[\w]*(?=: B)",grades)
+
+            print(grades)
+            print(len(grades))
+            return(grades)
+
+    assert len(grades()) == 16
+
+
+    import re
+  def logs():
+      with open("assets/logdata.txt", "r") as file:
+          logdata = file.read()
+      #print(logdata)
+      pattern= """
+      (?P<host>[\d.]*)            #the university title
+      (\s-\s)                     #an indicator of the location
+      (?P<user_name>[\w\d-]*)     #city the university is in
+      (\s\[)                      #separator for the state
+      (?P<time>[\d\w\s/:-]*)
+      (\]\s")
+      (?P<request>[\w\d\s./\+\-\%]*)            #the state the city is located in"""
+
+      logs=[]
+      for lg in re.finditer(pattern,logdata,re.VERBOSE):
+          logs.append(lg.groupdict())
+
+      #print(logs()[1]['request'])
+      #print(logs)
+      return(logs)
+
+
+      assert len(logs()) == 979
+
+one_item={'host': '146.204.224.152',
+  'user_name': 'feest6811',
+  'time': '21/Jun/2019:15:45:24 -0700',
+  'request': 'POST /incentivize HTTP/1.1'}
+assert one_item in logs(), "Sorry, this item should be in the log results, check your formating"

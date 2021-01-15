@@ -1,0 +1,77 @@
+# Proportion of children in the dataset who had a mother with various levels of educations
+def proportion_of_education():
+    import pandas as pd
+    df = pd.read_csv('assets/NISPUF17.csv')
+    
+    df=(df['EDUC1'].value_counts() / df['EDUC1'].value_counts().sum())
+    
+    b={"less than high school":df[1],
+    "high school":df[2],
+    "more than high school but not college":df[3],
+    "college":df[4]}
+    return b
+proportion_of_education()
+
+
+# Relationship between being fed breastmilk as a child and getting a seasonal influenza vaccine from a healthcare provider
+def average_influenza_doses():
+    import pandas as pd
+    import numpy as np
+        
+    df = pd.read_csv('assets/NISPUF17.csv')
+    b=df[["CBF_01","P_NUMFLU"]].dropna()
+    
+    q= b[b["CBF_01"]==1]
+    p= b[b["CBF_01"]==2]
+    
+    f = np.sum(q["P_NUMFLU"])/len(q)
+    y = np.sum(p["P_NUMFLU"])/len(p)
+    o=(f,y)
+    
+    return o
+
+average_influenza_doses()
+
+
+# Evidence of a link between vaccine effectiveness and sex of the child.
+Calculate the ratio of the number of children who contracted chickenpox but were vaccinated against it versus those who were vaccinated 
+but did not contract chicken pox.
+
+def chickenpox_by_sex():
+    import pandas as pd
+    import numpy as np
+        
+    df = pd.read_csv('assets/NISPUF17.csv')
+    h=df[["SEX","HAD_CPOX","P_NUMVRC"]].dropna()
+    
+    b=len(h[(h["SEX"] ==1) & (h["HAD_CPOX"] ==1)& (h["P_NUMVRC"] >0)])
+    c=len(h[(h["SEX"] ==1) & (h["HAD_CPOX"] ==2)& (h["P_NUMVRC"] >0)])
+    
+    d=len(h[(h["SEX"] ==2) & (h["HAD_CPOX"] ==1)& (h["P_NUMVRC"] >0)])
+    e=len(h[(h["SEX"] ==2) & (h["HAD_CPOX"] ==2)& (h["P_NUMVRC"] >0)])
+    
+    f={"male":b/c, "female":d/e}
+    
+    return f
+
+chickenpox_by_sex()
+
+
+# Correlation between the use of the vaccine and whether it results in prevention of the infection or disease
+def corr_chickenpox():
+    import scipy.stats as stats
+    import numpy as np
+    import pandas as pd
+    
+    # this is just an example dataframe
+    df = pd.read_csv('assets/NISPUF17.csv')
+    
+    h=df[["HAD_CPOX","P_NUMVRC"]].dropna()
+    
+    c = h.drop(h[h["HAD_CPOX"]==77].index)
+    
+    # here is some stub code to actually run the correlation
+    corr, pval=stats.pearsonr(c["P_NUMVRC"],c["HAD_CPOX"])
+    return corr
+
+corr_chickenpox() 

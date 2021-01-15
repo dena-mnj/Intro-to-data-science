@@ -1,0 +1,56 @@
+# Counting words in the sentece
+def example_word_count():
+    example_string = "Amy is 5 years old"
+    
+    result = example_string.split(" ")
+    return len(result)
+    
+example_word_count()    
+
+
+# Extract names
+import re
+def names():
+    simple_string = """Amy is 5 years old, and her sister Mary is 2 years old. 
+    Ruth and Peter, their parents, have 3 kids."""
+
+    names = re.findall('Amy|Mary|Ruth|Peter', simple_string)
+    
+    return(names)
+    
+ names()   
+ 
+ # Generate list of students that got B
+ import re
+def grades():
+    with open ("assets/grades.txt", "r") as file:
+        grades = file.read()
+        
+        grades = re.findall("[\w]*\s[\w]*(?=: B)",grades)
+
+        return(grades)
+grades()
+
+
+# Generate the dictionary with university title, the location, city and state
+import re
+def logs():
+    with open("assets/logdata.txt", "r") as file:
+        logdata = file.read()
+    #print(logdata)
+    pattern= """
+    (?P<host>[\d.]*)            #the university title
+    (\s-\s)                     #an indicator of the location
+    (?P<user_name>[\w\d-]*)     #city the university is in
+    (\s\[)                      #separator for the state
+    (?P<time>[\d\w\s/:-]*)
+    (\]\s")
+    (?P<request>[\w\d\s./\+\-\%]*)            #the state the city is located in"""
+
+    logs=[]
+    for lg in re.finditer(pattern,logdata,re.VERBOSE):
+        logs.append(lg.groupdict())
+
+    return(logs)
+    
+    

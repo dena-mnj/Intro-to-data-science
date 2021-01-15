@@ -1,0 +1,225 @@
+import pandas as pd
+import numpy as np
+import re
+
+# Data cleaning and create dataframes
+def answer_one():
+    global Energy,GDP,ScimEn,df
+    Energy = pd.read_excel ("assets/Energy Indicators.xls",usecols="C:F",skiprows=range(1, 18),
+                           names=['Country', 'Energy Supply', 'Energy Supply per Capita', '% Renewable'],
+                           na_values=['...'],skipfooter=38)
+    
+    Energy['Energy Supply'].replace('\s','', regex=True, inplace=True)
+
+    Energy['Energy Supply'] = Energy['Energy Supply'].apply(lambda x: x * 1000000)
+
+    Energy['Country'] = Energy['Country'].str.split(" \(").str.get(0)
+    Energy['Country'] = Energy['Country'].str.split("\d").str.get(0)
+    Energy['Country'].replace('Republic of Korea','South Korea', inplace=True)
+    Energy['Country'].replace("United States of America", "United States", inplace=True)
+    Energy['Country'].replace("United Kingdom of Great Britain and Northern Ireland", "United Kingdom", inplace=True)
+    Energy['Country'].replace("China, Hong Kong Special Administrative Region", "Hong Kong", inplace=True)
+    
+    Energy=Energy.set_index ('Country')
+    
+    GDP = pd.read_csv("assets/world_bank.csv",usecols=np.r_[0, 50:60],skiprows=range(0, 5),na_values=[''],header=None
+                     ,names=['Country','2006', '2007', '2008', '2009', '2010', '2011', '2012', '2013', '2014', '2015'])
+    
+    GDP['Country'].replace("Korea, Rep.", "South Korea", inplace=True)
+    GDP['Country'].replace("Iran, Islamic Rep.", "Iran", inplace=True)
+    GDP['Country'].replace("Hong Kong SAR, China", "Hong Kong", inplace=True)
+   
+    GDP=GDP.set_index ('Country')
+    
+    ScimEn = pd.read_excel ("assets/scimagojr-3.xlsx",usecols="A:H",skiprows=0,
+                           names=['Rank', 'Country','Documents', 'Citable documents', 'Citations', 'Self-citations', 'Citations per document', 'H index'],
+                           skipfooter=176)
+    
+    ScimEn = ScimEn.set_index ('Country')
+    M1 = pd.merge(ScimEn, Energy, how='left', left_index=True, right_index=True)
+    df = pd.merge(M1, GDP, how='left', left_index=True, right_index=True)
+    
+    return(df)
+
+answer_one()
+
+# joined three datasets then reduced this to just the top 15 entries.
+def answer_two():
+    M1 = pd.merge(ScimEn.dropna(), Energy.dropna(), how='outer', left_index=True, right_index=True)
+    M2 = pd.merge(M1, GDP.dropna(), how='outer', left_index=True, right_index=True)
+    
+    M3 = pd.merge(ScimEn, Energy, how='inner', left_index=True, right_index=True)
+    M4 = pd.merge(M3, GDP, how='inner', left_index=True, right_index=True)
+    
+    number = len(M2)-len(M4)
+    return(number)
+answer_two()
+
+
+# Average GDP of 15 countries over the last 10 years 
+def answer_three():
+    
+    frames = ['2006', '2007', '2008', '2009', '2010', '2011', '2012', '2013', '2014', '2015']
+    avgGDP=pd.DataFrame()
+    avgGDP['avgGDP']= df[frames].apply(lambda x: np.mean(x), axis=1)
+    
+    avgGDP.sort_values("avgGDP", ascending=False, inplace=True)
+    return(avgGDP['avgGDP'])
+answer_three()
+
+
+# GDP change over the 10 year span for the country with the 6th largest average GDP
+def answer_four():
+    a=df.loc["United Kingdom","2015"]-df.loc["United Kingdom","2006"]
+    return(a)
+answer_four() 
+
+
+# mean energy supply per capita
+def answer_five():
+    meanEPC= df["Energy Supply per Capita"].mean(axis=0)
+    return(meanEPC)
+answer_five()
+
+# Country with the maximum % Renewable and the percentage
+def answer_six():
+    MaxRnwC=df["% Renewable"].idxmax(axis=0)
+    MaxRnw=df["% Renewable"].max(axis=0)
+    
+    return(MaxRnwC,MaxRnw)
+
+
+# new column that is the ratio of Self-Citations to Total Citations. 
+The maximum value for this new column, and the country with the highest ratio
+answer_six()
+def answer_seven():
+    global df
+    df["ratio"]=df["Self-citations"]/df["Citations"]
+    
+    MaxCtC=df["ratio"].idxmax(axis=0)
+    MaxCt=df["ratio"].max(axis=0)
+    
+    return(MaxCtC,MaxCt)
+
+# The third most populous country 
+answer_seven()
+def answer_eight():
+    global df
+    df["Population"]=df['Energy Supply']/df['Energy Supply per Capita']
+    
+    MaxPopC=df["Population"].idxmax(axis=0)
+    MaxPop=df["Population"].max(axis=0)
+    
+    return(MaxPopC)
+
+answer_eight()
+
+
+# The correlation between the number of citable documents per capita and the energy supply per capita
+def answer_nine():
+    import scipy.stats as stats
+    df["Cite per capita"]=df["Citable documents"]/df["Population"]
+    h=df[["Cite per capita",'Energy Supply per Capita']].dropna()
+    corr, pval=stats.pearsonr(h["Cite per capita"],h['Energy Supply per Capita'])
+    
+    return(corr)
+
+answer_nine()
+
+
+# Create a new column with a 1 if the country's % Renewable value is at or above the median for all countries in the top 15, 
+and a 0 if the country's % Renewable value is below the median
+def answer_ten():
+    
+    meanRnw = df["% Renewable"].median(axis=0)
+    
+    def assign(renew):
+        if renew>=meanRnw:
+            return(1)
+        return(0)
+  
+    df["HighRenew"]=df["% Renewable"].apply(lambda x:assign(x))
+    
+    HighRenew = df["HighRenew"]
+    return(HighRenew)
+
+answer_ten() 
+
+# Group the Countries by Continent, then create a DataFrame that displays the sample size, 
+and the sum, mean, and std deviation for the estimated population of each country.
+def answer_eleven():
+    global dd
+    d  = {'China':'Asia', 
+                  'United States':'North America', 
+                  'Japan':'Asia', 
+                  'United Kingdom':'Europe', 
+                  'Russian Federation':'Europe', 
+                  'Canada':'North America', 
+                  'Germany':'Europe', 
+                  'India':'Asia',
+                  'France':'Europe', 
+                  'South Korea':'Asia', 
+                  'Italy':'Europe', 
+                  'Spain':'Europe', 
+                  'Iran':'Asia',
+                  'Australia':'Australia', 
+                  'Brazil':'South America'}
+    
+    dd= pd.DataFrame([d.keys(), d.values()]).T
+    dd.columns= ['country', 'continent']
+    dd=dd.set_index('country')
+
+    dd["population"]=df["Population"]
+    dt=dd.set_index('continent').groupby(level=0).agg((np.size,np.sum,np.mean,np.std))
+    dt=dt.droplevel(0,axis=1)
+    
+    return(dt)
+    
+answer_eleven()  
+
+
+# Cut % Renewable into 5 bins. Group Top15 by the Continent, as well as these new % Renewable bins. Number of the countries in each bin
+def answer_twelve():
+    global df
+    d  = {'China':'Asia', 
+                  'United States':'North America', 
+                  'Japan':'Asia', 
+                  'United Kingdom':'Europe', 
+                  'Russian Federation':'Europe', 
+                  'Canada':'North America', 
+                  'Germany':'Europe', 
+                  'India':'Asia',
+                  'France':'Europe', 
+                  'South Korea':'Asia', 
+                  'Italy':'Europe', 
+                  'Spain':'Europe', 
+                  'Iran':'Asia',
+                  'Australia':'Australia', 
+                  'Brazil':'South America'}
+    
+    dd= pd.DataFrame([d.keys(), d.values()]).T
+    dd.columns= ['country', 'Continent']
+    dd=dd.set_index('country')
+
+    dd["population"]=df["Population"]
+    dd["% Renewable"]=pd.cut(df["% Renewable"], 5)
+    dd=dd.set_index(['Continent','% Renewable']).groupby(level=(0,1)).agg(np.size).dropna()
+    
+    dd=dd.reset_index()
+    dd=dd.set_index(['Continent','% Renewable']).stack()
+
+    return(dd)
+
+answer_twelve()
+
+
+# Convert the Population Estimate series to a string with thousands separator (using commas)
+def answer_thirteen():
+    global df
+    dx=pd.DataFrame()
+    dx["PopEst"]=df["Population"]
+    dx["PopEst"]=dx["PopEst"].apply(lambda x: f"{x:,}")
+    
+    return(dx["PopEst"])
+
+answer_thirteen()
